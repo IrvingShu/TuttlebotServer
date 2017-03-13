@@ -19,6 +19,7 @@ typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> MoveBaseCl
 
 std::vector<move_base_msgs::MoveBaseGoal> place;
 ros::Publisher server_pub;
+//robot is busy
 
 void initMap()
 {
@@ -77,79 +78,83 @@ int SocketSend(int clientSocketFd ,char *buf, int len)
     return 0;
 }
 
+volatile int robot_is_busy = 0;
+
 void* rec_data(void *fd)
 {
 
     int client_sockfd;
     int i, byte;
-    char char_recv[100];
     client_sockfd = *((int *) fd);
     while(1)
     {
+        char char_recv[100];
         if((byte=recv(client_sockfd, char_recv, 100, 0)) == -1)
         {
             ROS_INFO("recv failed!");
             exit(-1);
+        }
+        ROS_INFO("receive from client is:  %s\n", char_recv);
+
+        if(char_recv[0] == 'r')
+        {
+            ROS_INFO("ros is running!");
+            robot_is_busy = 1;
+            
+        }
+        if(char_recv[0] == 's')
+        {
+            ROS_INFO("ros is stopped!");
+            robot_is_busy = 0;
+            char msg[] = "f";
+            SocketSend(client_sockfd, msg, strlen(msg));
+            
         }
         if(strcmp(char_recv, "exit") == 0)
         {
             break;
         }
 
-        move_base_msgs::MoveBaseGoal goal;
-
-        //goal = place[(int)char_recv[0]];
-        switch(char_recv[0])
+        if(robot_is_busy == 1)
         {
-            case '0': goal = place[0];break;
-            case '1': goal = place[1];break;
-            case '2': goal = place[2]; break;
-            case '3': goal = place[3]; break;
-            case '4': goal = place[4]; break;
-            case '5': goal = place[5]; break;
-            case '6': goal = place[6]; break;
-            case '7': goal = place[7]; break;
-            case '8': goal = place[8]; break;
-            case '9': goal = place[9]; break;
-        }
-        
-        server_pub.publish(goal);
-
-        ROS_INFO("receive from client is:  %s\n", char_recv);
-        SocketSend(client_sockfd ,char_recv, strlen(char_recv));
-        
-        /*
-        MoveBaseClient ac("move_base", true);
-        while(!ac.waitForServer(ros::Duration(5.0)))
-        {
-            ROS_INFO("Waiting for the move_base action server to come up");
-        }
-        ROS_INFO("Sending goal");
-        ac.sendGoal(goal);
-        ac.waitForResult();
-        if(ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
-        {
-            ROS_INFO("arrive goal!");
-        }
-        else
-        {
-            ROS_INFO("arrive fail!"); 
-        }*/
-           
-
+            char msg[] = "r";
+            ROS_INFO("robot busy!");
+            SocketSend(client_sockfd, msg, strlen(msg));
+            char_recv[0] = 'c';
+        }else if(robot_is_busy==0){
+            move_base_msgs::MoveBaseGoal goal;
+            switch(char_recv[0])
+            {
+                case '0': goal = place[0];break;
+                case '1': goal = place[1];break;
+                case '2': goal = place[2]; break;
+                case '3': goal = place[3]; break;
+                case '4': goal = place[4]; break;
+                case '5': goal = place[5]; break;
+                case '6': goal = place[6]; break;
+                case '7': goal = place[7]; break;
+                case '8': goal = place[8]; break;
+                case '9': goal = place[9]; break;
+                default: continue;
+            }
+            server_pub.publish(goal);
+            SocketSend(client_sockfd ,char_recv,strlen(char_recv)); 
+        }        
     }
     free(fd);
     close(client_sockfd);
     pthread_exit(NULL);
 }
 
+
+
+
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "serverTalker");
     ros::NodeHandle n;
     server_pub = n.advertise<move_base_msgs::MoveBaseGoal>("server", 1000);
-
-
+    
     initMap();
 
     int server_sockfd;
@@ -181,7 +186,7 @@ int main(int argc, char **argv)
 
     templen = sizeof(struct sockaddr);
     ROS_INFO("server waiting for connect\n");
-
+    
     while(1)
     {
         pthread_t thread;

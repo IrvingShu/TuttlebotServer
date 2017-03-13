@@ -92,4 +92,5 @@ mrobot_nav/CMakeFiles/navBygoal.dir/src/navBygoal.cpp.o: /opt/ros/indigo/include
 mrobot_nav/CMakeFiles/navBygoal.dir/src/navBygoal.cpp.o: /opt/ros/indigo/include/ros/wall_timer_options.h
 mrobot_nav/CMakeFiles/navBygoal.dir/src/navBygoal.cpp.o: /opt/ros/indigo/include/rosconsole/macros_generated.h
 mrobot_nav/CMakeFiles/navBygoal.dir/src/navBygoal.cpp.o: /opt/ros/indigo/include/std_msgs/Header.h
+mrobot_nav/CMakeFiles/navBygoal.dir/src/navBygoal.cpp.o: /opt/ros/indigo/include/std_msgs/String.h
 
