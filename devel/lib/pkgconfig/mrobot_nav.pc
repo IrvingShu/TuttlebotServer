@@ -1,0 +1,8 @@
+prefix=/home/young/ROS/mrobot_nav_catkin_ws/devel
+
+Name: mrobot_nav
+Description: Description of mrobot_nav
+Version: 0.0.0
+Cflags: 
+Libs: -L/home/young/ROS/mrobot_nav_catkin_ws/devel/lib 
+Requires: 

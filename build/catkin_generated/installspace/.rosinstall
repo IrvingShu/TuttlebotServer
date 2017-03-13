@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /home/young/ROS/mrobot_nav_catkin_ws/install/setup.sh
