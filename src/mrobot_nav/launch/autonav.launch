@@ -1,0 +1,4 @@
+<launch>
+    <node name="serverTalker" pkg="mrobot_nav" type="server"/>
+    <node name="simple_navigation_goals" pkg="mrobot_nav" type="navBygoal"/>
+</launch>

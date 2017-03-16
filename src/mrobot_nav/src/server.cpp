@@ -61,12 +61,13 @@ int SocketSend(int clientSocketFd ,char *buf, int len)
         return -1;
     }
     ret = send(clientSocketFd, buf, len, 0);
-    
+    ROS_INFO("ret: %d, len: %d", ret,len);
     if(ret <=0)
     {
         return -1;
     }else if(ret == len)
     {
+        ROS_INFO("sned success!");
         return 0;
     }
     /*
@@ -92,7 +93,11 @@ void* rec_data(void *fd)
         if((byte=recv(client_sockfd, char_recv, 100, 0)) == -1)
         {
             ROS_INFO("recv failed!");
-            exit(-1);
+            //exit(-1);
+            //free(fd);
+            //close(client_sockfd);
+            //pthread_exit(NULL);
+            break;
         }
         ROS_INFO("receive from client is:  %s\n", char_recv);
 
@@ -122,6 +127,7 @@ void* rec_data(void *fd)
             SocketSend(client_sockfd, msg, strlen(msg));
             char_recv[0] = 'c';
         }else if(robot_is_busy==0){
+            ROS_INFO("robot start!");
             move_base_msgs::MoveBaseGoal goal;
             switch(char_recv[0])
             {
@@ -137,17 +143,16 @@ void* rec_data(void *fd)
                 case '9': goal = place[9]; break;
                 default: continue;
             }
-            server_pub.publish(goal);
+            //send(client_sockfd, char_recv, strlen(char_recv),0);
             SocketSend(client_sockfd ,char_recv,strlen(char_recv)); 
+            ROS_INFO("send client!");
+            server_pub.publish(goal);
         }        
     }
     free(fd);
     close(client_sockfd);
     pthread_exit(NULL);
 }
-
-
-
 
 int main(int argc, char **argv)
 {
@@ -158,10 +163,10 @@ int main(int argc, char **argv)
     initMap();
 
     int server_sockfd;
-    int *client_sockfd;
-    int server_len, client_len;
+    //int *client_sockfd;
+    int server_len;//, client_len;
     struct sockaddr_in server_address;
-    struct sockaddr_in client_address;
+    //struct sockaddr_in client_address;
     struct sockaddr_in tempaddress;
     int i, byte;
     char char_recv, char_send;
@@ -189,6 +194,10 @@ int main(int argc, char **argv)
     
     while(1)
     {
+        int *client_sockfd;
+        int client_len;
+        struct sockaddr_in client_address;
+
         pthread_t thread;
         client_sockfd = (int*) malloc(sizeof(int));   
         client_len = sizeof(client_address);
@@ -204,7 +213,6 @@ int main(int argc, char **argv)
             break;
         }
     }
-    shutdown(*client_sockfd, 2);
     shutdown(server_sockfd, 2);
 
     return 0;
